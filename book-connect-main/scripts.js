@@ -19,7 +19,7 @@ const searchForm = getElement('[data-search-form]');
 const searchOverlay = getElement('[data-search-overlay]');
 const bookList1 = getElement('[data-list-items]');
 const messageList = getElement('[data-list-message]');
-const dataListButton = getElement('[data-list-button]');
+const buttonList = getElement('[data-list-button]');
 const bookPicture = getElement("[data-list-image]");
 const bookTitle = getElement("[data-list-title]");
 const bookSubtitle =  getElement("[data-list-subtitle]");
@@ -65,6 +65,7 @@ settingsForm.addEventListener('submit', (event) => {
     settingsOverlay.close();
 });
 
+let page = 1
 const range = [0, BOOKS_PER_PAGE]
 
 if (!books && !Array.isArray(books)) throw new Error('Source required') 
@@ -133,4 +134,80 @@ const createPreviewElement = (book) => {
       }
     }
   });
+  
+  /**
+ * Renders a list of books based on the current page.
+ * @param {number} page - The current page number.
+ * @param {number} booksPerPage - The number of books to display per page.
+ */
+const renderBooks = (page, booksPerPage) => {
+    const start = (page - 1) * booksPerPage;
+    const end = start + booksPerPage;
+    const booksToRender = books.slice(start, end);
+  
+    const fragmentPage = document.createDocumentFragment();
+  
+    booksToRender.forEach((book) => {
+      const previewElement = createPreviewElement(book);
+      fragmentPage.appendChild(previewElement);
+    });
+  
+    dataList.innerHTML = ''; // Clear existing content
+    dataList.appendChild(fragmentPage);
+  };
+  
+  /**
+ * Appends a list of books to the dataList element.
+ * @param {Array} booksToAppend - Array of books to append.
+ */
+const appendBooks = (booksToAppend) => {
+    const fragmentPage = document.createDocumentFragment();
+  
+    booksToAppend.forEach((book) => {
+      const previewElement = createPreviewElement(book);
+      fragmentPage.appendChild(previewElement);
+    });
+  
+    dataList.appendChild(fragmentPage);
+  };
+  
+  /**
+   * Updates the "Show more" button based on the remaining books.
+   * @param {number} remainingBooks - The number of remaining books.
+   */
+  const updateShowMoreButton = (remainingBooks) => {
+    if (remainingBooks <= 0) {
+      buttonList.disabled = true;
+      buttonList.textContent = `Show more (0)`;
+    } else {
+      buttonList.textContent = `Show more (${remainingBooks})`;
+      buttonList.disabled = false;
+    }
+  };
+  
+  /**
+   * Handles the "Show more" button click.
+   */
+  const handleShowMoreClick = () => {
+    const start = page * BOOKS_PER_PAGE;
+    const end = start + BOOKS_PER_PAGE;
+    const booksToAppend = books.slice(start, end);
+  
+    appendBooks(booksToAppend);
+  
+    // Update remaining books and button state
+    const remainingBooks = books.length - end;
+    updateShowMoreButton(remainingBooks);
+  
+    // Increment page
+    page++;
+  };
+  
+  // Initial rendering of books and "Show more" button
+  const initialBooks = books.slice(0, BOOKS_PER_PAGE);
+  appendBooks(initialBooks);
+  updateShowMoreButton(books.length - BOOKS_PER_PAGE);
+  
+  // Event listener for "Show more" button click
+  buttonList.addEventListener('click', handleShowMoreClick);
   
